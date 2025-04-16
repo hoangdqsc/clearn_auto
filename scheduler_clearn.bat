@@ -1,37 +1,45 @@
 @echo off
 setlocal
 
-:: Đường dẫn đến script dọn dẹp (sửa nếu bạn đặt chỗ khác)
-set CLEANUP_SCRIPT=C:\Scripts\scheduler_clearn.bat
+:: Path to the cleanup script (adjust if placed elsewhere)
+set CLEANUP_SCRIPT=C:\Scripts\clearn_auto.bat
 
-:: Tên tác vụ muốn tạo
+:: Task names to be created
 set TASK_NAME_SHUTDOWN=AutoCleanupOnShutdown
 set TASK_NAME_RESTART=AutoCleanupOnRestart
 
-:: ===================== TẠO TÁC VỤ KHI SHUTDOWN =======================
-:: Tạo tác vụ chạy lúc shutdown
-schtasks /create ^
-    /tn "%TASK_NAME_SHUTDOWN%" ^
-    /tr "%CLEANUP_SCRIPT%" ^
-    /sc onevent ^
-    /ec System ^
-    /ev Microsoft-Windows-ShutdownEvent ^
-    /ru "SYSTEM" ^
-    /rl HIGHEST ^
-    /f >nul 2>&1
-
-:: ===================== TẠO TÁC VỤ KHI RESTART =======================
-:: Tạo tác vụ chạy lúc restart (khởi động lại máy)
-schtasks /create ^
-    /tn "%TASK_NAME_RESTART%" ^
+:: ===================== CREATE TASK FOR SHUTDOWN =======================
+:: Create task to run at shutdown
+schtasks /create /tn "%TASK_NAME_SHUTDOWN%" ^
     /tr "%CLEANUP_SCRIPT%" ^
     /sc onstart ^
     /ru "SYSTEM" ^
     /rl HIGHEST ^
-    /f >nul 2>&1
+    /f
 
-:: Xác nhận đã tạo xong
-echo Tác vụ "%TASK_NAME_SHUTDOWN%" đã được tạo để chạy khi shutdown.
-echo Tác vụ "%TASK_NAME_RESTART%" đã được tạo để chạy khi restart.
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Unable to create task "%TASK_NAME_SHUTDOWN%"
+    pause
+    exit /b
+)
+
+:: ===================== CREATE TASK FOR RESTART =======================
+:: Create task to run at restart (on system restart)
+schtasks /create /tn "%TASK_NAME_RESTART%" ^
+    /tr "%CLEANUP_SCRIPT%" ^
+    /sc onstart ^
+    /ru "SYSTEM" ^
+    /rl HIGHEST ^
+    /f
+
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Unable to create task "%TASK_NAME_RESTART%"
+    pause
+    exit /b
+)
+
+:: Confirmation that the tasks were created successfully
+echo Task "%TASK_NAME_SHUTDOWN%" has been created to run at shutdown.
+echo Task "%TASK_NAME_RESTART%" has been created to run at restart.
 pause
 exit /b
