@@ -15,7 +15,7 @@ if (-not (Test-Path $localPath)) {
 }
 
 # Danh sách các file cần tải
-$files = @("clearn_auto.bat", "scheduler_clearn.bat")
+$files = @("clearn_auto.bat")
 
 foreach ($file in $files) {
     $url = "$baseUrl/$file"
