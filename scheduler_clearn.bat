@@ -2,7 +2,7 @@
 setlocal
 
 :: Đường dẫn đến script dọn dẹp (sửa nếu bạn đặt chỗ khác)
-set CLEANUP_SCRIPT=C:\Scripts\full_cleanup.bat
+set CLEANUP_SCRIPT=C:\Script\scheduler_clearn.bat
 
 :: Tên tác vụ muốn tạo
 set TASK_NAME_SHUTDOWN=AutoCleanupOnShutdown
