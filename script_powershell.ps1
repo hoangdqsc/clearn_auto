@@ -24,6 +24,6 @@ foreach ($file in $files) {
 }
 
 # Thực thi file scheduler (tạo tác vụ khởi động)
-Start-Process -FilePath "$localPath\scheduler_clearn.bat" -Verb RunAs
+# Start-Process -FilePath "$localPath\scheduler_clearn.bat" -Verb RunAs
 
 Write-Host "✅ Đã tải và thiết lập xong. Máy sẽ tự động dọn rác khi khởi động." -ForegroundColor Green
