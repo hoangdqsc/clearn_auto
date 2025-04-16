@@ -1,45 +1,34 @@
 @echo off
 setlocal
 
-:: Path to the cleanup script (adjust if placed elsewhere)
+:: Kiểm tra quyền admin
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Vui lòng chạy script này với quyền Administrator.
+    pause
+    exit /b
+)
+
+:: Đường dẫn tới script cần chạy
 set CLEANUP_SCRIPT=C:\Scripts\clearn_auto.bat
+set TASK_NAME=AutoCleanupOnStartup
 
-:: Task names to be created
-set TASK_NAME_SHUTDOWN=AutoCleanupOnShutdown
-set TASK_NAME_RESTART=AutoCleanupOnRestart
+:: Tạo tác vụ
+schtasks /create ^
+ /tn "%TASK_NAME%" ^
+ /tr "%CLEANUP_SCRIPT%" ^
+ /sc onstart ^
+ /ru SYSTEM ^
+ /rl HIGHEST ^
+ /f
 
-:: ===================== CREATE TASK FOR SHUTDOWN =======================
-:: Create task to run at shutdown
-schtasks /create /tn "%TASK_NAME_SHUTDOWN%" ^
-    /tr "%CLEANUP_SCRIPT%" ^
-    /sc onstart ^
-    /ru "SYSTEM" ^
-    /rl HIGHEST ^
-    /f
-
-if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Unable to create task "%TASK_NAME_SHUTDOWN%"
+:: Kiểm tra lỗi
+if %errorlevel% neq 0 (
+    echo Lỗi khi tạo tác vụ.
     pause
     exit /b
 )
 
-:: ===================== CREATE TASK FOR RESTART =======================
-:: Create task to run at restart (on system restart)
-schtasks /create /tn "%TASK_NAME_RESTART%" ^
-    /tr "%CLEANUP_SCRIPT%" ^
-    /sc onstart ^
-    /ru "SYSTEM" ^
-    /rl HIGHEST ^
-    /f
-
-if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Unable to create task "%TASK_NAME_RESTART%"
-    pause
-    exit /b
-)
-
-:: Confirmation that the tasks were created successfully
-echo Task "%TASK_NAME_SHUTDOWN%" has been created to run at shutdown.
-echo Task "%TASK_NAME_RESTART%" has been created to run at restart.
+echo Đã tạo tác vụ "%TASK_NAME%" chạy khi khởi động máy.
 pause
 exit /b
