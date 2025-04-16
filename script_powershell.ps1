@@ -6,8 +6,8 @@ if (-not $adminCheck) {
 }
 
 # Thông tin repo GitHub
-$baseUrl = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
-$localPath = "C:\Scripts"
+$baseUrl = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/clearn_auto.bat"
+$localPath = "C:\Users\TT\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
 
 # Tạo thư mục nếu chưa có
 if (-not (Test-Path $localPath)) {
