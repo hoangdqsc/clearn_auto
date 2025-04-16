@@ -14,16 +14,12 @@ if (-not (Test-Path $localPath)) {
     New-Item -ItemType Directory -Path $localPath -Force
 }
 
-# Danh sách các file cần tải
-$files = @("clearn_auto.bat")
+# Đường dẫn tệp cần tải
+$file = "clearn_auto.bat"
+$url = "$baseUrl/$file"
+$outFile = "$localPath\$file"
 
-foreach ($file in $files) {
-    $url = "$baseUrl/$file"
-    $outFile = "$localPath\$file"
-    Invoke-WebRequest -Uri $url -OutFile $outFile
-}
+# Tải tệp
+Invoke-WebRequest -Uri $url -OutFile $outFile
 
-# Thực thi file scheduler (tạo tác vụ khởi động)
-# Start-Process -FilePath "$localPath\scheduler_clearn.bat" -Verb RunAs
-
-Write-Host "✅ Đã tải và thiết lập xong. Máy sẽ tự động dọn rác khi khởi động." -ForegroundColor Green
+Write-Host "✅ Đã tải tệp clearn_auto.bat và lưu vào thư mục Startup." -ForegroundColor Green
