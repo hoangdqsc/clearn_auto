@@ -7,7 +7,7 @@ if (-not $adminCheck) {
 
 # Thông tin repo GitHub
 $baseUrl = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
-//$localPath = [System.IO.Path]::Combine($env:USERPROFILE, "AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup")
+# $localPath = [System.IO.Path]::Combine($env:USERPROFILE, "AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup")
 $localPath = "C:\Scripts"
 # Tạo thư mục nếu chưa có
 if (-not (Test-Path $localPath)) {
