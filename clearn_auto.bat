@@ -1,21 +1,14 @@
 @echo off
-setlocal
 
-:: ===== Kiểm tra quyền admin, nếu không thì tự yêu cầu bật lại =====
+:: Kiểm tra quyền admin, nếu không thì thoát
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [!] Script chưa chạy với quyền Administrator. Đang yêu cầu bật lại...
-    set "vbsfile=%temp%\getadmin.vbs"
-    echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "%~s0", "", "", "runas", 1 > "%vbsfile%"
-    cscript //nologo "%vbsfile%"
-    del "%vbsfile%"
-    exit /b
-)
-
-echo [+] Đang chạy với quyền Administrator. Bắt đầu dọn dẹp...
+if %errorlevel% neq 0 exit /b
 
 :: ========== 1. XÓA FILE + FOLDER TRONG TEMP NGƯỜI DÙNG ==========
+:: Xóa file trong Temp user
 del /f /s /q "%LOCALAPPDATA%\Temp\*.*" >nul 2>&1
+
+:: Xóa folder con trong Temp user
 for /d %%i in ("%LOCALAPPDATA%\Temp\*") do rd /s /q "%%i" >nul 2>&1
 
 :: ========== 2. XÓA FILE + FOLDER TRONG WINDOWS TEMP ==========
@@ -49,6 +42,4 @@ if exist "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache" (
     del /f /s /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*" >nul 2>&1
 )
 
-echo [+] Dọn dẹp hoàn tất!
-timeout /t 3 >nul
 exit /b
