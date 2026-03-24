@@ -2,7 +2,7 @@
 # 🚀 Clearn Auto - One Click Setup (Full)
 # ============================================
 
-# Muốn chạy file này hãy mở powerShell quyển quản trị viên và dán code sau: powershell.exe -ExecutionPolicy Bypass -File "C:\Scripts\setup.ps1"
+# Muốn chạy file này hãy mở powerShell quyển quản trị viên và dán code sau: powershell.exe -ExecutionPolicy Bypass -File "C:\Scripts\script.ps1"
 
 
 # ===== Kiểm tra Admin =====
