@@ -1,25 +1,121 @@
-# Kiểm tra quyền Administrator
-$adminCheck = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $adminCheck) {
-    Write-Host "⚠️ Vui lòng chạy PowerShell với quyền Administrator." -ForegroundColor Red
+# ================================
+# 🚀 Clearn Auto - One Click Setup
+# ================================
+
+# ===== Kiểm tra Admin =====
+if (-not ([Security.Principal.WindowsPrincipal] 
+[Security.Principal.WindowsIdentity]::GetCurrent()
+).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "⚠️ Hãy chạy PowerShell bằng quyền Administrator!" -ForegroundColor Red
+    pause
     exit
 }
 
-# Thông tin repo GitHub
-$baseUrl = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
-# $localPath = [System.IO.Path]::Combine($env:USERPROFILE, "AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup")
+# ===== CONFIG =====
+$repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
-# Tạo thư mục nếu chưa có
-if (-not (Test-Path $localPath)) {
-    New-Item -ItemType Directory -Path $localPath -Force
+$mainFile = "clearn_auto.bat"
+$versionFile = "version.txt"
+$taskName = "ClearnAutoTask"
+
+# ===== Tạo thư mục =====
+if (!(Test-Path $localPath)) {
+    New-Item -ItemType Directory -Path $localPath -Force | Out-Null
 }
 
-# Đường dẫn tệp cần tải
-$file = "clearn_auto.bat"
-$url = "$baseUrl/$file"
-$outFile = "$localPath\$file"
+# ===== Hàm tải file =====
+function Download-File($fileName) {
+    $url = "$repoRaw/$fileName"
+    $out = "$localPath\$fileName"
 
-# Tải tệp
-Invoke-WebRequest -Uri $url -OutFile $outFile
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
+        if ((Test-Path $out) -and ((Get-Item $out).Length -gt 0)) {
+            Write-Host "✅ $fileName OK"
+        } else {
+            throw "File lỗi"
+        }
+    } catch {
+        Write-Host "❌ Lỗi tải $fileName" -ForegroundColor Red
+        exit
+    }
+}
 
-Write-Host "✅ Đã tải tệp clearn_auto.bat và lưu vào thư mục Startup." -ForegroundColor Green
+# ===== Tải file chính =====
+Download-File $mainFile
+
+# ===== Tải version =====
+Download-File $versionFile
+
+# ===== Tạo script updater =====
+$updaterPath = "$localPath\update.ps1"
+
+@"
+`$repoRaw = "$repoRaw"
+`$localPath = "$localPath"
+
+function Get-RemoteVersion {
+    try {
+        return (Invoke-WebRequest "`$repoRaw/version.txt" -UseBasicParsing).Content.Trim()
+    } catch { return "" }
+}
+
+function Get-LocalVersion {
+    if (Test-Path "`$localPath\version.txt") {
+        return (Get-Content "`$localPath\version.txt").Trim()
+    }
+    return ""
+}
+
+`$remote = Get-RemoteVersion
+`$local = Get-LocalVersion
+
+if (`$remote -ne "" -and `$remote -ne `$local) {
+    Write-Output "Updating..."
+
+    Invoke-WebRequest "`$repoRaw/clearn_auto.bat" -OutFile "`$localPath\clearn_auto.bat"
+    Invoke-WebRequest "`$repoRaw/version.txt" -OutFile "`$localPath\version.txt"
+}
+"@ | Out-File -Encoding UTF8 $updaterPath
+
+# ===== Tạo Task chính (cleanup) =====
+$mainScript = "$localPath\clearn_auto.bat"
+
+$action1 = New-ScheduledTaskAction `
+    -Execute "cmd.exe" `
+    -Argument "/c `"$mainScript`" >> C:\Scripts\clearn.log 2>&1"
+
+$trigger1 = New-ScheduledTaskTrigger -Daily -At 9:00AM
+
+# ===== Task updater =====
+$action2 = New-ScheduledTaskAction `
+    -Execute "powershell.exe" `
+    -Argument "-ExecutionPolicy Bypass -File `"$updaterPath`""
+
+$trigger2 = New-ScheduledTaskTrigger -Daily -At 10:00AM
+
+# ===== Xóa task cũ =====
+Get-ScheduledTask -TaskName "$taskName*" -ErrorAction SilentlyContinue | 
+    Unregister-ScheduledTask -Confirm:$false
+
+# ===== Tạo task =====
+Register-ScheduledTask `
+    -TaskName "$taskName-Main" `
+    -Action $action1 `
+    -Trigger $trigger1 `
+    -RunLevel Highest `
+    -User $env:USERNAME
+
+Register-ScheduledTask `
+    -TaskName "$taskName-Updater" `
+    -Action $action2 `
+    -Trigger $trigger2 `
+    -RunLevel Highest `
+    -User $env:USERNAME
+
+# ===== DONE =====
+Write-Host ""
+Write-Host "🎉 CÀI ĐẶT HOÀN TẤT!" -ForegroundColor Green
+Write-Host "📌 Cleanup chạy: 9:00 AM mỗi ngày"
+Write-Host "🔄 Auto update: 10:00 AM mỗi ngày"
+Write-Host "📂 Thư mục: $localPath"
