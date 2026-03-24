@@ -1,6 +1,6 @@
-# ================================
-# 🚀 Clearn Auto - One Click Setup
-# ================================
+# ============================================
+# 🚀 Clearn Auto - One Click Setup (Full)
+# ============================================
 
 # ===== Kiểm tra Admin =====
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -39,10 +39,8 @@ function Download-File($fileName) {
     }
 }
 
-# ===== Tải file chính =====
+# ===== Tải file chính và version =====
 Download-File $mainFile
-
-# ===== Tải version =====
 Download-File $versionFile
 
 # ===== Tạo script updater =====
@@ -70,13 +68,12 @@ function Get-LocalVersion {
 
 if (`$remote -ne "" -and `$remote -ne `$local) {
     Write-Output "Updating..."
-
     Invoke-WebRequest "`$repoRaw/clearn_auto.bat" -OutFile "`$localPath\clearn_auto.bat"
     Invoke-WebRequest "`$repoRaw/version.txt" -OutFile "`$localPath\version.txt"
 }
 "@ | Out-File -Encoding UTF8 $updaterPath
 
-# ===== Tạo Task chính (cleanup) =====
+# ===== Tạo Task Cleanup =====
 $mainScript = "$localPath\clearn_auto.bat"
 
 $action1 = New-ScheduledTaskAction `
@@ -85,18 +82,18 @@ $action1 = New-ScheduledTaskAction `
 
 $trigger1 = New-ScheduledTaskTrigger -Daily -At 9:00AM
 
-# ===== Task updater =====
+# ===== Tạo Task Auto Update =====
 $action2 = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
     -Argument "-ExecutionPolicy Bypass -File `"$updaterPath`""
 
 $trigger2 = New-ScheduledTaskTrigger -Daily -At 10:00AM
 
-# ===== Xóa task cũ =====
+# ===== Xóa Task cũ nếu tồn tại =====
 Get-ScheduledTask -TaskName "$taskName*" -ErrorAction SilentlyContinue | 
     Unregister-ScheduledTask -Confirm:$false
 
-# ===== Tạo task =====
+# ===== Register Task =====
 Register-ScheduledTask `
     -TaskName "$taskName-Main" `
     -Action $action1 `
