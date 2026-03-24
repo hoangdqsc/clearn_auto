@@ -2,6 +2,9 @@
 # 🚀 Clearn Auto - One Click Setup (Full)
 # ============================================
 
+# Muốn chạy file này hãy mở powerShell quyển quản trị viên và dán code sau: powershell.exe -ExecutionPolicy Bypass -File "C:\Scripts\setup.ps1"
+
+
 # ===== Kiểm tra Admin =====
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "⚠️ Hãy chạy PowerShell bằng quyền Administrator!" -ForegroundColor Red
