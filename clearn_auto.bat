@@ -41,5 +41,5 @@ if exist "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache" (
 if exist "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache" (
     del /f /s /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*" >nul 2>&1
 )
-
+:: ========== 9. Mục khác ==========
 exit /b
