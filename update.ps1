@@ -5,6 +5,21 @@
 $repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
 
+function Get-Config($url) {
+    $config = @{}
+    $lines = (Invoke-WebRequest $url).Content -split "`n"
+
+    foreach ($line in $lines) {
+        if ($line -match "=") {
+            $k,$v = $line -split "="
+            $config[$k.Trim()] = $v.Trim()
+        }
+    }
+    return $config
+}
+$remote = Get-Config "$repoRaw/version.txt"
+$local  = Get-Config "$localPath/version.txt"
+
 function Get-RemoteVersion {
     try {
         return (Invoke-WebRequest "$repoRaw/version.txt" -UseBasicParsing).Content.Trim()
