@@ -2,9 +2,20 @@
 :: =========================================
 :: =========================================
 ::    UPDATE NGAY 27-03-2026
+
+:: =========================================
+:: UPDATE SCRIPT (update.ps1)
+:: =========================================
+echo Updating updater script...
+
+powershell -Command ^
+"Invoke-WebRequest 'https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1' ^
+-OutFile 'C:\Scripts\update.ps1'" >nul 2>&1
+
 :: =========================================
 :: 🚀 AUTO RUN AS ADMIN
 :: =========================================
+
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo =====================================
