@@ -1,72 +1,99 @@
-# ============================================
-# 🚀 Clearn Auto PRO - Safe & Optimized apdate 27/03/2026
-# ============================================
+@echo off
+:: =========================================
+:: =========================================
+::    UPDATE NGAY 27-03-2026
+:: =========================================
+:: 🚀 AUTO RUN AS ADMIN
+:: =========================================
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo =====================================
+    echo   Dang khoi dong voi quyen Admin...
+    echo =====================================
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    exit /b
+)
 
-# ===== AUTO RUN AS ADMIN =====
-if (-not ([Security.Principal.WindowsPrincipal] `
-    [Security.Principal.WindowsIdentity]::GetCurrent() `
-    ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+:: =========================================
+:: CONFIG
+:: =========================================
+set LOG=C:\Scripts\clearn.log
+set MODE=SAFE   :: SAFE hoặc FULL
 
-    Write-Host "🔄 Restarting with Administrator rights..."
-    
-    Start-Process powershell `
-        -ArgumentList "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
-        -Verb RunAs
-    
-    exit
-}
-# ===== CONFIG =====
-$localPath = "C:\Scripts"
-$logFile = "$localPath\clearn.log"
-$mode = "SAFE"   # SAFE or FULL
+if not exist C:\Scripts mkdir C:\Scripts
 
-# ===== CREATE FOLDER =====
-if (!(Test-Path $localPath)) {
-    New-Item -ItemType Directory -Path $localPath -Force | Out-Null
-}
+echo. >> %LOG%
+echo ===== START CLEAN %date% %time% ===== >> %LOG%
 
-# ===== LOG FUNCTION =====
-function Write-Log($msg) {
-    $time = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    "$time - $msg" | Out-File -Append $logFile
-}
+:: =========================================
+:: 1. CLEAN TEMP USER
+:: =========================================
+echo Cleaning USER TEMP...
+echo Cleaning USER TEMP >> %LOG%
+del /f /s /q "%LOCALAPPDATA%\Temp\*.*" >nul 2>&1
+for /d %%i in ("%LOCALAPPDATA%\Temp\*") do rd /s /q "%%i" >nul 2>&1
 
-Write-Log "===== START CLEAN ====="
+:: =========================================
+:: 2. CLEAN WINDOWS TEMP
+:: =========================================
+echo Cleaning WINDOWS TEMP...
+echo Cleaning WINDOWS TEMP >> %LOG%
+del /f /s /q "C:\Windows\Temp\*.*" >nul 2>&1
+for /d %%i in ("C:\Windows\Temp\*") do rd /s /q "%%i" >nul 2>&1
 
-# ===== 1. CLEAN USER TEMP =====
-Write-Log "Cleaning USER TEMP"
-Remove-Item "$env:LOCALAPPDATA\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
+:: =========================================
+:: 3. EMPTY RECYCLE BIN
+:: =========================================
+echo Cleaning Recycle Bin...
+echo Cleaning Recycle Bin >> %LOG%
+powershell -command "Clear-RecycleBin -Force" >nul 2>&1
 
-# ===== 2. CLEAN WINDOWS TEMP =====
-Write-Log "Cleaning WINDOWS TEMP"
-Remove-Item "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
+:: =========================================
+:: 4. CLEAN BROWSER CACHE
+:: =========================================
+echo Cleaning Browser Cache...
+echo Cleaning Browser Cache >> %LOG%
 
-# ===== 3. EMPTY RECYCLE BIN =====
-Write-Log "Cleaning Recycle Bin"
-Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+:: Chrome
+if exist "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache" (
+    del /f /s /q "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*" >nul 2>&1
+)
 
-# ===== 4. CLEAN BROWSER CACHE =====
-Write-Log "Cleaning Browser Cache"
-Remove-Item "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\*" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\*" -Recurse -Force -ErrorAction SilentlyContinue
+:: Edge
+if exist "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache" (
+    del /f /s /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*" >nul 2>&1
+)
 
-# ===== 5. FULL MODE EXTRA =====
-if ($mode -eq "FULL") {
-    Write-Log "Running FULL cleanup"
+:: =========================================
+:: 5. FULL MODE (DỌN SÂU)
+:: =========================================
+if /I "%MODE%"=="FULL" (
 
-    # Stop Windows Update
-    net stop wuauserv | Out-Null
+    echo Running FULL CLEAN...
+    echo Running FULL CLEAN >> %LOG%
 
-    # Clean update cache
-    Remove-Item "C:\Windows\SoftwareDistribution\Download\*" -Recurse -Force -ErrorAction SilentlyContinue
+    :: Stop Windows Update
+    net stop wuauserv >nul 2>&1
 
-    # Start again
-    net start wuauserv | Out-Null
+    :: Clean update cache
+    del /f /s /q "C:\Windows\SoftwareDistribution\Download\*.*" >nul 2>&1
+    for /d %%i in ("C:\Windows\SoftwareDistribution\Download\*") do rd /s /q "%%i" >nul 2>&1
 
-    # Optional Prefetch (weekly only recommended)
-    Write-Log "Cleaning Prefetch"
-    Remove-Item "C:\Windows\Prefetch\*" -Recurse -Force -ErrorAction SilentlyContinue
-}
+    :: Start lại service
+    net start wuauserv >nul 2>&1
 
-Write-Log "===== DONE CLEAN ====="
-Write-Host "✅ Cleanup completed! Mode: $mode" -ForegroundColor Green
+    :: Prefetch (không nên chạy hàng ngày)
+    echo Cleaning Prefetch >> %LOG%
+    del /f /s /q "C:\Windows\Prefetch\*.*" >nul 2>&1
+)
+
+:: =========================================
+:: DONE
+:: =========================================
+echo ===== DONE %date% %time% ===== >> %LOG%
+echo.
+echo =====================================
+echo   CLEAN HOAN TAT! MODE: %MODE%
+echo =====================================
+timeout /t 2 /nobreak >nul
+exit /b
