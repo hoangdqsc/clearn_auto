@@ -2,6 +2,27 @@
 # 🔄 Clearn Auto Updater (JSON VERSION)
 # =========================================
 
+# ===== LOG CONFIG =====
+$logFile = "C:\Scripts\update.log"
+$maxSize = 1MB
+
+# ===== LOG ROTATION =====
+if (Test-Path $logFile) {
+    $size = (Get-Item $logFile).Length
+
+    if ($size -gt $maxSize) {
+        $backup = "C:\Scripts\update_" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".log"
+        Rename-Item $logFile $backup
+
+        # Giữ tối đa 5 file log
+        $logs = Get-ChildItem "C:\Scripts\update_*.log" | Sort-Object LastWriteTime -Descending
+        if ($logs.Count -gt 5) {
+            $logs | Select-Object -Skip 5 | Remove-Item
+        }
+    }
+}
+
+
 $repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
 $logFile = "$localPath\update.log"
