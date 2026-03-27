@@ -1,5 +1,5 @@
 # =========================================
-# 🔄 Clearn Auto Updater PRO
+# 🔄 Clearn Auto Updater (JSON VERSION)
 # =========================================
 
 $repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
@@ -12,48 +12,39 @@ function Log($msg) {
     "$time - $msg" | Out-File -Append $logFile
 }
 
-# ===== READ CONFIG =====
-function Get-Config($path) {
-    $config = @{}
-    if (Test-Path $path) {
-        $lines = Get-Content $path
-        foreach ($line in $lines) {
-            if ($line -match "=") {
-                $k,$v = $line -split "="
-                $config[$k.Trim()] = $v.Trim()
-            }
-        }
+# ===== LOAD CONFIG =====
+function Get-LocalConfig {
+    if (Test-Path "$localPath\config.json") {
+        return Get-Content "$localPath\config.json" | ConvertFrom-Json
     }
-    return $config
+    return $null
 }
 
 function Get-RemoteConfig {
-    $config = @{}
     try {
-        $lines = (Invoke-WebRequest "$repoRaw/version.txt").Content -split "`n"
-        foreach ($line in $lines) {
-            if ($line -match "=") {
-                $k,$v = $line -split "="
-                $config[$k.Trim()] = $v.Trim()
-            }
-        }
-    } catch {}
-    return $config
+        $json = (Invoke-WebRequest "$repoRaw/config.json").Content
+        return $json | ConvertFrom-Json
+    } catch {
+        Log "❌ Cannot load remote config"
+        return $null
+    }
 }
 
 $remote = Get-RemoteConfig
-$local  = Get-Config "$localPath\version.txt"
+$local  = Get-LocalConfig
+
+if (-not $remote) { exit }
 
 # ===== UPDATE FILE =====
-if ($remote.version -ne $local.version) {
+if (-not $local -or $remote.version -ne $local.version) {
 
     Log "Updating version $($local.version) -> $($remote.version)"
 
     Invoke-WebRequest "$repoRaw/clearn_auto.bat" -OutFile "$localPath\clearn_auto.bat"
-    Invoke-WebRequest "$repoRaw/version.txt" -OutFile "$localPath\version.txt"
+    Invoke-WebRequest "$repoRaw/config.json" -OutFile "$localPath\config.json"
 }
 
-# ===== UPDATE TASK (KHÔNG XÓA) =====
+# ===== UPDATE TASK =====
 $cleanTime  = $remote.clean_time
 $updateTime = $remote.update_time
 
