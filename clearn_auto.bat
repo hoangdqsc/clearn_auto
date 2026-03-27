@@ -1,5 +1,5 @@
 # ============================================
-# 🚀 Clearn Auto PRO - Safe & Optimized
+# 🚀 Clearn Auto PRO - Safe & Optimized apdate 27/03/2026
 # ============================================
 
 # ===== AUTO RUN AS ADMIN =====
