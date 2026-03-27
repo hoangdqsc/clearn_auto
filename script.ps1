@@ -17,6 +17,7 @@ $repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
 $mainFile = "clearn_auto.bat"
 $versionFile = "version.txt"
+$UpdateFile = "update.ps1"
 $taskName = "ClearnAutoTask"
 
 # ===== Tạo thư mục =====
@@ -45,7 +46,7 @@ function Download-File($fileName) {
 # ===== Tải file chính và version =====
 Download-File $mainFile
 Download-File $versionFile
-
+Download-File $UpdateFile
 # ===== Tạo script updater =====
 $updaterPath = "$localPath\update.ps1"
 
