@@ -4,6 +4,19 @@
 ::    UPDATE NGAY 27-03-2026
 
 :: =========================================
+
+:: ===== LOG ROTATION =====
+set LOG=C:\Scripts\clearn.log
+
+if exist %LOG% (
+    for %%A in (%LOG%) do (
+        if %%~zA gtr 1048576 (
+            echo Log too big, resetting...
+            del %LOG%
+        )
+    )
+)
+
 :: UPDATE SCRIPT (update.ps1)
 :: =========================================
 echo Checking update for updater...
