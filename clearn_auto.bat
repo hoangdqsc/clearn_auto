@@ -1,45 +1,72 @@
-@echo off
+# ============================================
+# 🚀 Clearn Auto PRO - Safe & Optimized
+# ============================================
 
-:: Kiểm tra quyền admin, nếu không thì thoát
-net session >nul 2>&1
-if %errorlevel% neq 0 exit /b
+# ===== AUTO RUN AS ADMIN =====
+if (-not ([Security.Principal.WindowsPrincipal] `
+    [Security.Principal.WindowsIdentity]::GetCurrent() `
+    ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
 
-:: ========== 1. XÓA FILE + FOLDER TRONG TEMP NGƯỜI DÙNG ==========
-:: Xóa file trong Temp user
-del /f /s /q "%LOCALAPPDATA%\Temp\*.*" >nul 2>&1
+    Write-Host "🔄 Restarting with Administrator rights..."
+    
+    Start-Process powershell `
+        -ArgumentList "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
+        -Verb RunAs
+    
+    exit
+}
+# ===== CONFIG =====
+$localPath = "C:\Scripts"
+$logFile = "$localPath\clearn.log"
+$mode = "SAFE"   # SAFE or FULL
 
-:: Xóa folder con trong Temp user
-for /d %%i in ("%LOCALAPPDATA%\Temp\*") do rd /s /q "%%i" >nul 2>&1
+# ===== CREATE FOLDER =====
+if (!(Test-Path $localPath)) {
+    New-Item -ItemType Directory -Path $localPath -Force | Out-Null
+}
 
-:: ========== 2. XÓA FILE + FOLDER TRONG WINDOWS TEMP ==========
-del /f /s /q "C:\Windows\Temp\*.*" >nul 2>&1
-for /d %%i in ("C:\Windows\Temp\*") do rd /s /q "%%i" >nul 2>&1
+# ===== LOG FUNCTION =====
+function Write-Log($msg) {
+    $time = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    "$time - $msg" | Out-File -Append $logFile
+}
 
-:: ========== 3. XÓA PREFETCH ==========
-del /f /s /q "C:\Windows\Prefetch\*.*" >nul 2>&1
+Write-Log "===== START CLEAN ====="
 
-:: ========== 4. XÓA THÙNG RÁC ==========
-powershell.exe -command "Clear-RecycleBin -Force" >nul 2>&1
+# ===== 1. CLEAN USER TEMP =====
+Write-Log "Cleaning USER TEMP"
+Remove-Item "$env:LOCALAPPDATA\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
 
-:: ========== 5. XÓA FILE UPDATE WINDOWS CŨ ==========
-del /f /s /q "C:\Windows\SoftwareDistribution\Download\*.*" >nul 2>&1
-for /d %%i in ("C:\Windows\SoftwareDistribution\Download\*") do rd /s /q "%%i" >nul 2>&1
+# ===== 2. CLEAN WINDOWS TEMP =====
+Write-Log "Cleaning WINDOWS TEMP"
+Remove-Item "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
 
-:: ========== 6. XÓA WINDOWS.OLD (NẾU CÓ) ==========
-if exist "C:\Windows.old" rd /s /q "C:\Windows.old"
+# ===== 3. EMPTY RECYCLE BIN =====
+Write-Log "Cleaning Recycle Bin"
+Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 
-:: ========== 7. XÓA ĐIỂM KHÔI PHỤC CŨ ==========
-vssadmin delete shadows /for=c: /oldest >nul 2>&1
+# ===== 4. CLEAN BROWSER CACHE =====
+Write-Log "Cleaning Browser Cache"
+Remove-Item "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\*" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\*" -Recurse -Force -ErrorAction SilentlyContinue
 
-:: ========== 8. DỌN CACHE TRÌNH DUYỆT ==========
-:: Chrome
-if exist "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache" (
-    del /f /s /q "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*" >nul 2>&1
-)
+# ===== 5. FULL MODE EXTRA =====
+if ($mode -eq "FULL") {
+    Write-Log "Running FULL cleanup"
 
-:: Edge
-if exist "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache" (
-    del /f /s /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*" >nul 2>&1
-)
-:: ========== 9. Mục khác ==========
-exit /b
+    # Stop Windows Update
+    net stop wuauserv | Out-Null
+
+    # Clean update cache
+    Remove-Item "C:\Windows\SoftwareDistribution\Download\*" -Recurse -Force -ErrorAction SilentlyContinue
+
+    # Start again
+    net start wuauserv | Out-Null
+
+    # Optional Prefetch (weekly only recommended)
+    Write-Log "Cleaning Prefetch"
+    Remove-Item "C:\Windows\Prefetch\*" -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Log "===== DONE CLEAN ====="
+Write-Host "✅ Cleanup completed! Mode: $mode" -ForegroundColor Green
