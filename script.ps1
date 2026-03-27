@@ -83,14 +83,14 @@ $action1 = New-ScheduledTaskAction `
     -Execute "cmd.exe" `
     -Argument "/c `"$mainScript`" >> C:\Scripts\clearn.log 2>&1"
 
-$trigger1 = New-ScheduledTaskTrigger -Daily -At 9:00AM
+$trigger1 = New-ScheduledTaskTrigger -Daily -At 8:05AM
 
 # ===== Tạo Task Auto Update =====
 $action2 = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
     -Argument "-ExecutionPolicy Bypass -File `"$updaterPath`""
 
-$trigger2 = New-ScheduledTaskTrigger -Daily -At 10:00AM
+$trigger2 = New-ScheduledTaskTrigger -Daily -At 9:00AM
 
 # ===== Xóa Task cũ nếu tồn tại =====
 Get-ScheduledTask -TaskName "$taskName*" -ErrorAction SilentlyContinue | 
