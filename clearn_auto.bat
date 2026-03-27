@@ -30,7 +30,12 @@ if %errorlevel% neq 0 (
 :: CONFIG
 :: =========================================
 set LOG=C:\Scripts\clearn.log
-set MODE=SAFE   :: SAFE hoặc FULL
+:: ===== ĐỌC MODE TỪ config.json =====
+set MODE=SAFE
+
+if exist C:\Scripts\config.json (
+    for /f %%i in ('powershell -NoProfile -Command "(Get-Content 'C:\Scripts\config.json' | ConvertFrom-Json).mode"') do set MODE=%%i
+)
 
 if not exist C:\Scripts mkdir C:\Scripts
 
