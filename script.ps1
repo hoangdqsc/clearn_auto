@@ -73,6 +73,7 @@ if (`$remote -ne "" -and `$remote -ne `$local) {
     Write-Output "Updating..."
     Invoke-WebRequest "`$repoRaw/clearn_auto.bat" -OutFile "`$localPath\clearn_auto.bat"
     Invoke-WebRequest "`$repoRaw/version.txt" -OutFile "`$localPath\version.txt"
+    Invoke-WebRequest "$repoRaw/update.ps1" -OutFile "$localPath/update.ps1"
 }
 "@ | Out-File -Encoding UTF8 $updaterPath
 
