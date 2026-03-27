@@ -6,16 +6,15 @@
 :: =========================================
 :: UPDATE SCRIPT (update.ps1)
 :: =========================================
-echo Checking update...
+echo Checking update for updater...
 
 powershell -NoProfile -Command ^
 "try { ^
     $ProgressPreference='SilentlyContinue'; ^
-    Invoke-WebRequest 'https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1' ^
-    -TimeoutSec 2 ^
-    -OutFile 'C:\Scripts\update.ps1' ^
-} catch { }" >nul 2>&1
-
+    $url='https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1'; ^
+    $out='C:\Scripts\update.ps1'; ^
+    Invoke-WebRequest $url -OutFile $out -TimeoutSec 2 ^
+} catch { }"
 :: =========================================
 :: 🚀 AUTO RUN AS ADMIN
 :: =========================================
