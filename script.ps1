@@ -114,6 +114,6 @@ Register-ScheduledTask `
 # ===== DONE =====
 Write-Host ""
 Write-Host "🎉 CÀI ĐẶT HOÀN TẤT!" -ForegroundColor Green
-Write-Host "📌 Cleanup chạy: 9:00 AM mỗi ngày"
-Write-Host "🔄 Auto update: 10:00 AM mỗi ngày"
+Write-Host "📌 Cleanup chạy: 8:05 AM mỗi ngày"
+Write-Host "🔄 Auto update: 9:00 AM mỗi ngày"
 Write-Host "📂 Thư mục: $localPath"
