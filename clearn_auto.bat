@@ -6,11 +6,12 @@
 :: =========================================
 :: UPDATE SCRIPT (update.ps1)
 :: =========================================
-echo Updating updater script...
+echo Checking update for updater...
 
 powershell -Command ^
-"Invoke-WebRequest 'https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1' ^
--OutFile 'C:\Scripts\update.ps1'" >nul 2>&1
+"$url='https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1'; ^
+$out='C:\Scripts\update.ps1'; ^
+Invoke-WebRequest $url -OutFile $out" >nul 2>&1
 
 :: =========================================
 :: 🚀 AUTO RUN AS ADMIN
