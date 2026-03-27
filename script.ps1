@@ -16,7 +16,7 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
 $mainFile = "clearn_auto.bat"
-$versionFile = "version.txt"
+$versionFile = "config.json"
 $UpdateFile = "update.ps1"
 $taskName = "ClearnAutoTask"
 
