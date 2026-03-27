@@ -40,7 +40,7 @@ if exist C:\Scripts\config.json (
 if not exist C:\Scripts mkdir C:\Scripts
 
 echo. >> %LOG%
-echo ===== START CLEAN %date% %time% ===== >> %LOG%
+echo ===== START CLEAN %date% %time% MODE=%MODE% ===== >> %LOG%
 
 :: =========================================
 :: 1. CLEAN TEMP USER
