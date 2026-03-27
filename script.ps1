@@ -47,36 +47,7 @@ function Download-File($fileName) {
 Download-File $mainFile
 Download-File $versionFile
 Download-File $UpdateFile
-# ===== Tạo script updater =====
-$updaterPath = "$localPath\update.ps1"
 
-@"
-`$repoRaw = "$repoRaw"
-`$localPath = "$localPath"
-
-function Get-RemoteVersion {
-    try {
-        return (Invoke-WebRequest "`$repoRaw/version.txt" -UseBasicParsing).Content.Trim()
-    } catch { return "" }
-}
-
-function Get-LocalVersion {
-    if (Test-Path "`$localPath\version.txt") {
-        return (Get-Content "`$localPath\version.txt").Trim()
-    }
-    return ""
-}
-
-`$remote = Get-RemoteVersion
-`$local = Get-LocalVersion
-
-if (`$remote -ne "" -and `$remote -ne `$local) {
-    Write-Output "Updating..."
-    Invoke-WebRequest "`$repoRaw/clearn_auto.bat" -OutFile "`$localPath\clearn_auto.bat"
-    Invoke-WebRequest "`$repoRaw/version.txt" -OutFile "`$localPath\version.txt"
-    Invoke-WebRequest "$repoRaw/update.ps1" -OutFile "$localPath/update.ps1"
-}
-"@ | Out-File -Encoding UTF8 $updaterPath
 
 # ===== Tạo Task Cleanup =====
 $mainScript = "$localPath\clearn_auto.bat"
@@ -86,7 +57,7 @@ $action1 = New-ScheduledTaskAction `
     -Argument "/c `"$mainScript`" >> C:\Scripts\clearn.log 2>&1"
 
 $trigger1 = New-ScheduledTaskTrigger -Daily -At 8:05AM
-
+$updaterPath = "$localPath\update.ps1"
 # ===== Tạo Task Auto Update =====
 $action2 = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
