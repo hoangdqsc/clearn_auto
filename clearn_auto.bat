@@ -167,7 +167,7 @@ echo    =========================================================
 echo.
 echo       [+] Trang thai: Thanh cong
 echo       [+] Che do: %MODE%
-echo       [+] Cap nhat: 27-03-2026 (UJU VINA IT)
+echo       [+] Cap nhat: 28-03-2026 (UJU VINA IT)
 echo.
 echo    =========================================================
 echo    Cua so tu dong dong sau 5 giay...
