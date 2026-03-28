@@ -170,6 +170,6 @@ echo       [+] Che do: %MODE%
 echo       [+] Cap nhat: 27-03-2026 (UJU VINA IT)
 echo.
 echo    =========================================================
-echo    Cua so tu dong dong sau 3 giay...
-timeout /t 3 /nobreak >nul
+echo    Cua so tu dong dong sau 5 giay...
+timeout /t 5 /nobreak >nul
 exit /b
