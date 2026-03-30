@@ -25,7 +25,6 @@ if (Test-Path $logFile) {
 
 $repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
-$logFile = "$localPath\update.log"
 
 # ===== LOG =====
 function Log($msg) {
