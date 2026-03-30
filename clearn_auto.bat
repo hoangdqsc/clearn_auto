@@ -8,7 +8,15 @@ setlocal enabledelayedexpansion
 mode con: cols=70 lines=15
 
 :: Gọi PowerShell để đưa cửa sổ ra chính giữa màn hình
-powershell -Command "$w=Get-Host; $r=$w.UI.RawUI; $s=(Get-WmiObject Win32_VideoController).CurrentHorizontalResolution, (Get-WmiObject Win32_VideoController).CurrentVerticalResolution; $app=$Visual:Window; $size=$r.WindowSize; $pos=$r.WindowPosition; $pos.X=[math]::Max(0, [int](($s[0]-70*8)/2)); $pos.Y=[math]::Max(0, [int](($s[1]-25*16)/2)); $r.WindowPosition=$pos" >nul 2>&1
+powershell -NoProfile -Command "try { ^
+$w=Get-Host; ^
+$r=$w.UI.RawUI; ^
+$s=(Get-WmiObject Win32_VideoController).CurrentHorizontalResolution, (Get-WmiObject Win32_VideoController).CurrentVerticalResolution; ^
+$pos=$r.WindowPosition; ^
+$pos.X=[math]::Max(0, [int](($s[0]-70*8)/2)); ^
+$pos.Y=[math]::Max(0, [int](($s[1]-25*16)/2)); ^
+$r.WindowPosition=$pos ^
+} catch { }" >nul 2>&1
 
 title CONG CU TOI UU HE THONG - UJU VINA IT
 
