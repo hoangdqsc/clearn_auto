@@ -41,7 +41,7 @@ if %errorlevel% neq 0 (
 )
 
 :: =========================================
-:: 🔄 4. UPDATE SCRIPT (FIXED)
+:: 🔄 4. UPDATE SCRIPT (GIỮ UI + CHẠY TUẦN TỰ)
 :: =========================================
 cls
 color 0B
@@ -52,7 +52,6 @@ echo    =========================================================
 echo.
 echo    [*] Dang kiem tra phien ban moi tu Server...
 
-:: Download update script
 powershell -NoProfile -Command ^
 "try { ^
     $ProgressPreference='SilentlyContinue'; ^
@@ -61,9 +60,10 @@ powershell -NoProfile -Command ^
     Invoke-WebRequest $url -OutFile $out -TimeoutSec 2 ^
 } catch { }"
 
-:: Run update (hidden)
+:: 👉 CHẠY UPDATE (KHÔNG DÙNG start → giữ UI)
 if exist C:\Scripts\update.ps1 (
     echo    [*] Dang cap nhat he thong...
+    timeout /t 1 >nul
     powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "C:\Scripts\update.ps1"
 )
 
