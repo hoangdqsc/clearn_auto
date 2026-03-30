@@ -41,7 +41,7 @@ if %errorlevel% neq 0 (
 )
 
 :: =========================================
-:: 🔄 4. UPDATE SCRIPT (GIỮ UI + CHẠY TUẦN TỰ)
+:: 🔄 4. UPDATE SCRIPT (GIỮ NGUYÊN LOGIC GITHUB)
 :: =========================================
 cls
 color 0B
@@ -59,13 +59,6 @@ powershell -NoProfile -Command ^
     $out='C:\Scripts\update.ps1'; ^
     Invoke-WebRequest $url -OutFile $out -TimeoutSec 2 ^
 } catch { }"
-
-:: 👉 CHẠY UPDATE (KHÔNG DÙNG start → giữ UI)
-if exist C:\Scripts\update.ps1 (
-    echo    [*] Dang cap nhat he thong...
-    timeout /t 1 >nul
-    powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "C:\Scripts\update.ps1"
-)
 
 :: =========================================
 :: ⚙️ 5. CONFIG & INITIALIZE
