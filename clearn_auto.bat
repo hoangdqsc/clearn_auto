@@ -41,7 +41,7 @@ if %errorlevel% neq 0 (
 )
 
 :: =========================================
-:: 🔄 4. UPDATE SCRIPT (GIỮ NGUYÊN LOGIC GITHUB)
+:: 🔄 4. UPDATE SCRIPT (FIXED)
 :: =========================================
 cls
 color 0B
@@ -52,6 +52,7 @@ echo    =========================================================
 echo.
 echo    [*] Dang kiem tra phien ban moi tu Server...
 
+:: Download update script
 powershell -NoProfile -Command ^
 "try { ^
     $ProgressPreference='SilentlyContinue'; ^
@@ -59,6 +60,12 @@ powershell -NoProfile -Command ^
     $out='C:\Scripts\update.ps1'; ^
     Invoke-WebRequest $url -OutFile $out -TimeoutSec 2 ^
 } catch { }"
+
+:: Run update (hidden)
+if exist C:\Scripts\update.ps1 (
+    echo    [*] Dang cap nhat he thong...
+    powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "C:\Scripts\update.ps1"
+)
 
 :: =========================================
 :: ⚙️ 5. CONFIG & INITIALIZE
