@@ -1,6 +1,17 @@
 # =========================================
-# 🔄 Clearn Auto Updater (Refactored)
+# 🔄 Clearn Auto Updater (FINAL SILENT)
 # =========================================
+
+# ===== AUTO RE-RUN HIDDEN =====
+if (-not $env:RUN_HIDDEN) {
+    $env:RUN_HIDDEN = "1"
+
+    Start-Process powershell.exe `
+        -ArgumentList "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
+        -WindowStyle Hidden
+
+    exit
+}
 
 # ===== CONFIG =====
 $repoRaw   = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
@@ -8,12 +19,15 @@ $localPath = "C:\Scripts"
 $logFile   = "$localPath\update.log"
 $maxLogSize = 1MB
 
+# ===== STATE =====
+$updated = $false
+
 # ===== ENSURE FOLDER =====
 if (!(Test-Path $localPath)) {
     New-Item -ItemType Directory -Path $localPath | Out-Null
 }
 
-# ===== LOG FUNCTION =====
+# ===== LOG =====
 function Log($msg) {
     $time = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     "$time - $msg" | Out-File -Append $logFile
@@ -27,28 +41,25 @@ function Test-Admin {
 }
 
 if (-not (Test-Admin)) {
-    Log "❌ Script not running as Administrator"
+    Log "❌ Not running as Administrator"
     exit
 }
 
+Log "🚀 Starting updater..."
+
 # ===== LOG ROTATION =====
-function Rotate-Log {
-    if (Test-Path $logFile) {
-        $size = (Get-Item $logFile).Length
+if (Test-Path $logFile) {
+    $size = (Get-Item $logFile).Length
+    if ($size -gt $maxLogSize) {
+        $backup = "$localPath\update_" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".log"
+        Rename-Item $logFile $backup
 
-        if ($size -gt $maxLogSize) {
-            $backup = "$localPath\update_" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".log"
-            Rename-Item $logFile $backup
-
-            $logs = Get-ChildItem "$localPath\update_*.log" | Sort-Object LastWriteTime -Descending
-            if ($logs.Count -gt 5) {
-                $logs | Select-Object -Skip 5 | Remove-Item
-            }
+        $logs = Get-ChildItem "$localPath\update_*.log" | Sort-Object LastWriteTime -Descending
+        if ($logs.Count -gt 5) {
+            $logs | Select-Object -Skip 5 | Remove-Item
         }
     }
 }
-
-Rotate-Log
 
 # ===== LOAD CONFIG =====
 function Get-LocalConfig {
@@ -57,7 +68,7 @@ function Get-LocalConfig {
             return Get-Content "$localPath\config.json" | ConvertFrom-Json
         }
     } catch {
-        Log "❌ Failed to read local config"
+        Log "❌ Read local config failed"
     }
     return $null
 }
@@ -67,19 +78,19 @@ function Get-RemoteConfig {
         $res = Invoke-WebRequest "$repoRaw/config.json" -UseBasicParsing
         return $res.Content | ConvertFrom-Json
     } catch {
-        Log "❌ Cannot load remote config"
+        Log "❌ Load remote config failed"
         return $null
     }
 }
 
-# ===== DOWNLOAD FILE =====
+# ===== DOWNLOAD =====
 function Download-File($url, $output) {
     try {
         Invoke-WebRequest $url -OutFile $output -UseBasicParsing
-        Log "✅ Downloaded: $output"
+        Log "Downloaded: $output"
         return $true
     } catch {
-        Log "❌ Failed to download: $url"
+        Log "❌ Download failed: $url"
         return $false
     }
 }
@@ -89,26 +100,30 @@ $remote = Get-RemoteConfig
 $local  = Get-LocalConfig
 
 if (-not $remote) {
-    Log "❌ Remote config unavailable. Exit."
+    Log "❌ No remote config"
     exit
 }
 
-# ===== UPDATE FILES =====
+# ===== UPDATE FILE =====
 if (-not $local -or $remote.version -ne $local.version) {
 
-    Log "🔄 Updating version: $($local.version) -> $($remote.version)"
+    $updated = $true
+    Log "Updating version: $($local.version) -> $($remote.version)"
 
     $ok1 = Download-File "$repoRaw/clearn_auto.bat" "$localPath\clearn_auto.bat"
     $ok2 = Download-File "$repoRaw/config.json" "$localPath\config.json"
 
     if ($ok1 -and $ok2) {
-        Log "✅ Update completed successfully"
+        Log "Update success"
     } else {
-        Log "⚠️ Update may be incomplete"
+        Log "⚠️ Update incomplete"
     }
+
+} else {
+    Log "Already latest version"
 }
 
-# ===== GET TASK TIME =====
+# ===== TASK =====
 function Get-TaskTime($taskName) {
     try {
         $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
@@ -119,9 +134,7 @@ function Get-TaskTime($taskName) {
     return $null
 }
 
-# ===== CREATE TASK =====
 function Create-Task($name, $exe, $args, $time) {
-
     try {
         $action  = New-ScheduledTaskAction -Execute $exe -Argument $args
         $trigger = New-ScheduledTaskTrigger -Daily -At $time
@@ -133,39 +146,23 @@ function Create-Task($name, $exe, $args, $time) {
             -RunLevel Highest `
             -Force
 
-        Log "✅ Task updated: $name at $time"
+        Log "Task updated: $name"
     } catch {
-        Log "❌ Failed to update task: $name"
+        Log "❌ Task update failed: $name"
     }
 }
 
-# ===== SYNC TASKS =====
 $currentCleanTime  = Get-TaskTime "ClearnAutoTask-Main"
 $currentUpdateTime = Get-TaskTime "ClearnAutoTask-Updater"
 
-$cleanTime  = $remote.clean_time
-$updateTime = $remote.update_time
-
-# CLEAN TASK
-if ($cleanTime -ne $currentCleanTime) {
-    Log "🔄 Sync CLEAN task: $currentCleanTime -> $cleanTime"
-
-    Create-Task `
-        "ClearnAutoTask-Main" `
-        "cmd.exe" `
-        "/c `"$localPath\clearn_auto.bat`"" `
-        $cleanTime
+if ($remote.clean_time -ne $currentCleanTime) {
+    $updated = $true
+    Create-Task "ClearnAutoTask-Main" "cmd.exe" "/c `"$localPath\clearn_auto.bat`"" $remote.clean_time
 }
 
-# UPDATE TASK
-if ($updateTime -ne $currentUpdateTime) {
-    Log "🔄 Sync UPDATER task: $currentUpdateTime -> $updateTime"
-
-    Create-Task `
-        "ClearnAutoTask-Updater" `
-        "powershell.exe" `
-        "-ExecutionPolicy Bypass -File `"$localPath\update.ps1`"" `
-        $updateTime
+if ($remote.update_time -ne $currentUpdateTime) {
+    $updated = $true
+    Create-Task "ClearnAutoTask-Updater" "powershell.exe" "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$localPath\update.ps1`"" $remote.update_time
 }
 
-Log "🏁 Script finished"
+Log "🏁 Finished"
