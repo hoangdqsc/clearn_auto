@@ -1,168 +1,159 @@
-# =========================================
-# 🔄 Clearn Auto Updater (FINAL SILENT)3003
-# =========================================
+@echo off
+setlocal enabledelayedexpansion
+title HE THONG TOI UU MAY TINH TU DONG - UJU VINA IT
 
-# ===== AUTO RE-RUN HIDDEN =====
-if (-not $env:RUN_HIDDEN) {
-    $env:RUN_HIDDEN = "1"
+:: =========================================
+:: 📋 1. LOG ROTATION31
+:: =========================================
+set LOG=C:\Scripts\clearn.log
+if exist %LOG% (
+    for %%A in (%LOG%) do (
+        if %%~zA gtr 1048576 (
+            echo Log too big, resetting...
+            del %LOG%
+        )
+    )
+)
 
-    Start-Process powershell.exe `
-        -ArgumentList "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
-        -WindowStyle Hidden
+:: =========================================
+:: 🚀 2. AUTO RUN AS ADMIN (GIAO DIÊN CẢI TIẾN)
+:: =========================================
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    cls
+    color 0E
+    echo.
+    echo  =====================================================
+    echo     DANG KHOI DONG VOI QUYEN ADMIN...
+    echo  =====================================================
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    exit /b
+)
 
-    exit
-}
+:: =========================================
+:: 🔄 3. UPDATE SCRIPT (GIỮ NGUYÊN LOGIC GITHUB)
+:: =========================================
+cls
+color 0B
+echo.
+echo  =====================================================
+echo     DANG KIEM TRA BAN CAP NHAT...
+echo  =====================================================
+echo Checking update for updater...
 
-# ===== CONFIG =====
-$repoRaw   = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
-$localPath = "C:\Scripts"
-$logFile   = "$localPath\update.log"
-$maxLogSize = 1MB
+powershell -NoProfile -Command ^
+"try { ^
+    $ProgressPreference='SilentlyContinue'; ^
+    $url='https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1'; ^
+    $out='C:\Scripts\update.ps1'; ^
+    Invoke-WebRequest $url -OutFile $out -TimeoutSec 2 ^
+} catch { }"
 
-# ===== STATE =====
-$updated = $false
+:: =========================================
+:: ⚙️ 4. CONFIG & INITIALIZE Đọc Mode từ config
+:: =========================================
+set MODE=SAFE
+if exist C:\Scripts\config.json (
+    for /f %%i in ('powershell -NoProfile -Command "(Get-Content 'C:\Scripts\config.json' | ConvertFrom-Json).mode"') do set MODE=%%i
+)
+if not exist C:\Scripts mkdir C:\Scripts
 
-# ===== ENSURE FOLDER =====
-if (!(Test-Path $localPath)) {
-    New-Item -ItemType Directory -Path $localPath | Out-Null
-}
+echo. >> %LOG%
+echo ===== START CLEAN %date% %time% MODE=%MODE% ===== >> %LOG%
 
-# ===== LOG =====
-function Log($msg) {
-    $time = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    "$time - $msg" | Out-File -Append $logFile
-}
+:: =========================================
+:: 🧹 5. MAIN CLEANING PROGRESS (GIAO DIỆN TRỰC QUAN)
+:: =========================================
 
-# ===== CHECK ADMIN =====
-function Test-Admin {
-    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
+:: Bước 1: User Temp
+cls
+echo.
+echo  =====================================================
+echo     CONG CU TOI UU HE THONG - UJU VINA
+echo  =====================================================
+echo  [Step 1/4] Dang don dep tep tam (User Temp)...
+echo  [###-------] 25%%
+echo Cleaning USER TEMP >> %LOG%
+del /f /s /q "%LOCALAPPDATA%\Temp\*.*" >nul 2>&1
+for /d %%i in ("%LOCALAPPDATA%\Temp\*") do rd /s /q "%%i" >nul 2>&1
 
-if (-not (Test-Admin)) {
-    Log "❌ Not running as Administrator"
-    exit
-}
+:: Bước 2: Windows Temp
+cls
+echo.
+echo  =====================================================
+echo     CONG CU TOI UU HE THONG - UJU VINA
+echo  =====================================================
+echo  [Step 2/4] Dang xoa bo nho dem Windows...
+echo  [#####-----] 50%%
+echo Cleaning WINDOWS TEMP >> %LOG%
+del /f /s /q "C:\Windows\Temp\*.*" >nul 2>&1
+for /d %%i in ("C:\Windows\Temp\*") do rd /s /q "%%i" >nul 2>&1
 
-Log "🚀 Starting updater..."
+:: Bước 3: Recycle Bin
+cls
+echo.
+echo  =====================================================
+echo     CONG CU TOI UU HE THONG - UJU VINA
+echo  =====================================================
+echo  [Step 3/4] Dang lam trong Thung rac...
+echo  [#######---] 75%%
+echo Cleaning Recycle Bin >> %LOG%
+powershell -command "Clear-RecycleBin -Force" >nul 2>&1
 
-# ===== LOG ROTATION =====
-if (Test-Path $logFile) {
-    $size = (Get-Item $logFile).Length
-    if ($size -gt $maxLogSize) {
-        $backup = "$localPath\update_" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".log"
-        Rename-Item $logFile $backup
+:: Bước 4: Browser Cache
+cls
+echo.
+echo  =====================================================
+echo     CONG CU TOI UU HE THONG - UJU VINA
+echo  =====================================================
+echo  [Step 4/4] Dang xoa Cache trinh duyet...
+echo  [#########-] 95%%
+echo Cleaning Browser Cache >> %LOG%
+if exist "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache" (
+    del /f /s /q "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*" >nul 2>&1
+)
+if exist "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache" (
+    del /f /s /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*" >nul 2>&1
+)
 
-        $logs = Get-ChildItem "$localPath\update_*.log" | Sort-Object LastWriteTime -Descending
-        if ($logs.Count -gt 5) {
-            $logs | Select-Object -Skip 5 | Remove-Item
-        }
-    }
-}
+:: =========================================
+:: 🚀 6. FULL MODE (DỌN SÂU - GIỮ NGUYÊN LOGIC SERVICE)
+:: =========================================
+if /I "%MODE%"=="FULL" (
+    cls
+    echo.
+    echo  =====================================================
+    echo     DANG CHAY CHE DO DON DEP SAU (FULL MODE)
+    echo  =====================================================
+    echo  [*] Dang tam dung Windows Update Service...
+    echo Running FULL CLEAN >> %LOG%
 
-# ===== LOAD CONFIG =====
-function Get-LocalConfig {
-    try {
-        if (Test-Path "$localPath\config.json") {
-            return Get-Content "$localPath\config.json" | ConvertFrom-Json
-        }
-    } catch {
-        Log "❌ Read local config failed"
-    }
-    return $null
-}
+    net stop wuauserv >nul 2>&1
+    del /f /s /q "C:\Windows\SoftwareDistribution\Download\*.*" >nul 2>&1
+    for /d %%i in ("C:\Windows\SoftwareDistribution\Download\*") do rd /s /q "%%i" >nul 2>&1
+    net start wuauserv >nul 2>&1
 
-function Get-RemoteConfig {
-    try {
-        $res = Invoke-WebRequest "$repoRaw/config.json" -UseBasicParsing
-        return $res.Content | ConvertFrom-Json
-    } catch {
-        Log "❌ Load remote config failed"
-        return $null
-    }
-}
+    echo Cleaning Prefetch >> %LOG%
+    del /f /s /q "C:\Windows\Prefetch\*.*" >nul 2>&1
+)
 
-# ===== DOWNLOAD =====
-function Download-File($url, $output) {
-    try {
-        Invoke-WebRequest $url -OutFile $output -UseBasicParsing
-        Log "Downloaded: $output"
-        return $true
-    } catch {
-        Log "❌ Download failed: $url"
-        return $false
-    }
-}
-
-# ===== LOAD CONFIG =====
-$remote = Get-RemoteConfig
-$local  = Get-LocalConfig
-
-if (-not $remote) {
-    Log "❌ No remote config"
-    exit
-}
-
-# ===== UPDATE FILE =====
-if (-not $local -or $remote.version -ne $local.version) {
-
-    $updated = $true
-    Log "Updating version: $($local.version) -> $($remote.version)"
-
-    $ok1 = Download-File "$repoRaw/clearn_auto.bat" "$localPath\clearn_auto.bat"
-    $ok2 = Download-File "$repoRaw/config.json" "$localPath\config.json"
-
-    if ($ok1 -and $ok2) {
-        Log "Update success"
-    } else {
-        Log "⚠️ Update incomplete"
-    }
-
-} else {
-    Log "Already latest version"
-}
-
-# ===== TASK =====
-function Get-TaskTime($taskName) {
-    try {
-        $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-        if ($task -and $task.Triggers) {
-            return ($task.Triggers[0].StartBoundary).Substring(11,5)
-        }
-    } catch {}
-    return $null
-}
-
-function Create-Task($name, $exe, $args, $time) {
-    try {
-        $action  = New-ScheduledTaskAction -Execute $exe -Argument $args
-        $trigger = New-ScheduledTaskTrigger -Daily -At $time
-
-        Register-ScheduledTask `
-            -TaskName $name `
-            -Action $action `
-            -Trigger $trigger `
-            -RunLevel Highest `
-            -Force
-
-        Log "Task updated: $name"
-    } catch {
-        Log "❌ Task update failed: $name"
-    }
-}
-
-$currentCleanTime  = Get-TaskTime "ClearnAutoTask-Main"
-$currentUpdateTime = Get-TaskTime "ClearnAutoTask-Updater"
-
-if ($remote.clean_time -ne $currentCleanTime) {
-    $updated = $true
-    Create-Task "ClearnAutoTask-Main" "cmd.exe" "/c `"$localPath\clearn_auto.bat`"" $remote.clean_time
-}
-
-if ($remote.update_time -ne $currentUpdateTime) {
-    $updated = $true
-    Create-Task "ClearnAutoTask-Updater" "powershell.exe" "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$localPath\update.ps1`"" $remote.update_time
-}
-
-Log "🏁 Finished"
+:: =========================================
+:: ✅ 7. DONE
+:: =========================================
+echo ===== DONE %date% %time% ===== >> %LOG%
+cls
+color 0A
+echo.
+echo  ==========================================
+echo  HOAN TAT! MAY TINH CUA BAN DA DUOC DON DEP
+echo  ==========================================
+echo
+echo    [+] Trang thai: Thanh cong
+echo    [+] Che do: %MODE%
+echo    [+] May tinh da duoc toi uu hoa.
+echo    
+echo  =====================================
+echo.
+echo Dang tu dong dong sau 4 giay...
+timeout /t 3 /nobreak >nul
+exit /b
