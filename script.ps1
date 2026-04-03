@@ -1,92 +1,100 @@
 # ============================================
-# 🚀 Clearn Auto - One Click Setup (Full)
+# 🚀 Clearn Auto - Setup (FINAL CLEAN VERSION)0304
 # ============================================
 
-# Muốn chạy file này hãy mở powerShell quyển quản trị viên và dán code sau: powershell.exe -ExecutionPolicy Bypass -File "C:\Scripts\script.ps1"
-
-
-# ===== Kiểm tra Admin =====
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+# ===== CHECK ADMIN =====
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "⚠️ Hãy chạy PowerShell bằng quyền Administrator!" -ForegroundColor Red
     pause
     exit
 }
 
 # ===== CONFIG =====
-$repoRaw = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
+$repoRaw   = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
-$mainFile = "clearn_auto.bat"
-$versionFile = "config.json"
-$UpdateFile = "update.ps1"
-$taskName = "ClearnAutoTask"
+$taskName  = "ClearnAutoTask"
 
-# ===== Tạo thư mục =====
+# ===== FILE LIST =====
+$files = @(
+    "clearn_auto.bat",
+    "config.json",
+    "update.ps1"
+)
+
+# ===== CREATE FOLDER =====
 if (!(Test-Path $localPath)) {
     New-Item -ItemType Directory -Path $localPath -Force | Out-Null
 }
 
-# ===== Hàm tải file =====
-function Download-File($fileName) {
-    $url = "$repoRaw/$fileName"
-    $out = "$localPath\$fileName"
+# ===== DOWNLOAD & OVERWRITE =====
+foreach ($file in $files) {
+    $url = "$repoRaw/$file"
+    $out = "$localPath\$file"
 
     try {
-        Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
-        if ((Test-Path $out) -and ((Get-Item $out).Length -gt 0)) {
-            Write-Host "✅ $fileName OK"
-        } else {
-            throw "File lỗi"
-        }
+        Invoke-WebRequest -Uri $url -OutFile $out -TimeoutSec 5
+        Write-Host "✅ Updated: $file"
     } catch {
-        Write-Host "❌ Lỗi tải $fileName" -ForegroundColor Red
+        Write-Host "❌ Failed: $file" -ForegroundColor Red
         exit
     }
 }
 
-# ===== Tải file chính và version =====
-Download-File $mainFile
-Download-File $versionFile
-Download-File $UpdateFile
+# ===== LOAD LOCAL CONFIG =====
+$configPath = "$localPath\config.json"
 
+if (!(Test-Path $configPath)) {
+    Write-Host "❌ Missing config.json" -ForegroundColor Red
+    exit
+}
 
-# ===== Tạo Task Cleanup =====
+$config = Get-Content $configPath | ConvertFrom-Json
+
+$cleanTime  = $config.clean_time
+$updateTime = $config.update_time
+
+# ===== VALIDATE =====
+if (-not $cleanTime -or -not $updateTime) {
+    Write-Host "❌ config.json thiếu clean_time/update_time" -ForegroundColor Red
+    exit
+}
+
+# ===== CREATE / UPDATE TASK CLEAN =====
 $mainScript = "$localPath\clearn_auto.bat"
 
 $action1 = New-ScheduledTaskAction `
     -Execute "cmd.exe" `
     -Argument "/c `"$mainScript`" >> C:\Scripts\clearn.log 2>&1"
 
-$trigger1 = New-ScheduledTaskTrigger -Daily -At 8:05AM
-$updaterPath = "$localPath\update.ps1"
-# ===== Tạo Task Auto Update =====
-$action2 = New-ScheduledTaskAction `
-    -Execute "powershell.exe" `
-    -Argument "-ExecutionPolicy Bypass -File `"$updaterPath`""
+$trigger1 = New-ScheduledTaskTrigger -Daily -At $cleanTime
 
-$trigger2 = New-ScheduledTaskTrigger -Daily -At 9:00AM
-
-# ===== Xóa Task cũ nếu tồn tại =====
-Get-ScheduledTask -TaskName "$taskName*" -ErrorAction SilentlyContinue | 
-    Unregister-ScheduledTask -Confirm:$false
-
-# ===== Register Task =====
 Register-ScheduledTask `
     -TaskName "$taskName-Main" `
     -Action $action1 `
     -Trigger $trigger1 `
     -RunLevel Highest `
-    -User $env:USERNAME
+    -Force
+
+# ===== CREATE / UPDATE TASK UPDATE =====
+$updateScript = "$localPath\update.ps1"
+
+$action2 = New-ScheduledTaskAction `
+    -Execute "powershell.exe" `
+    -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$updateScript`""
+
+$trigger2 = New-ScheduledTaskTrigger -Daily -At $updateTime
 
 Register-ScheduledTask `
     -TaskName "$taskName-Updater" `
     -Action $action2 `
     -Trigger $trigger2 `
     -RunLevel Highest `
-    -User $env:USERNAME
+    -Force
 
 # ===== DONE =====
 Write-Host ""
-Write-Host "🎉 CÀI ĐẶT HOÀN TẤT!" -ForegroundColor Green
-Write-Host "📌 Cleanup chạy: 8:05 AM mỗi ngày"
-Write-Host "🔄 Auto update: 9:00 AM mỗi ngày"
-Write-Host "📂 Thư mục: $localPath"
+Write-Host "🎉 SETUP HOÀN TẤT" -ForegroundColor Green
+Write-Host "📌 Clean: $cleanTime"
+Write-Host "🔄 Update: $updateTime"
+Write-Host "📂 Path: $localPath"
