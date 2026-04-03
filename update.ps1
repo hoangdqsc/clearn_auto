@@ -1,4 +1,4 @@
-# ===== CONFIG =====0304
+# ===== CONFIG =====0304 15h
 $repoRaw  = "https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main"
 $localPath = "C:\Scripts"
 $logFile  = "$localPath\update.log"
