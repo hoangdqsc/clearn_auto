@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: =========================================
-:: 📺 1. CĂN GIỮA MÀN HÌNH & THIẾT LẬP KÍCH THƯỚC
+:: 📺 1. CĂN GIỮA MÀN HÌNH & THIẾT LẬP KÍCH THƯỚC 0304
 :: =========================================
 :: Thiết lập kích thước trước: 70 cột x 15 dòng
 mode con: cols=70 lines=15
