@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: =========================================
-:: 📺 1. CĂN GIỮA MÀN HÌNH & THIẾT LẬP KÍCH THƯỚC 0304 15h
+:: 📺 1. CĂN GIỮA MÀN HÌNH & THIẾT LẬP KÍCH THƯỚC 0304 15h5
 :: =========================================
 :: Thiết lập kích thước trước: 70 cột x 15 dòng
 mode con: cols=70 lines=15
@@ -64,8 +64,10 @@ powershell -NoProfile -Command ^
 "try { ^
     $ProgressPreference='SilentlyContinue'; ^
     $url='https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1'; ^
+    $tmp='C:\Scripts\update.tmp'; ^
     $out='C:\Scripts\update.ps1'; ^
-    Invoke-WebRequest $url -OutFile $out -TimeoutSec 2 ^
+    Invoke-WebRequest $url -OutFile $tmp -TimeoutSec 5; ^
+    if ((Get-Item $tmp).Length -gt 100) { Move-Item $tmp $out -Force } ^
 } catch { }"
 
 :: =========================================
