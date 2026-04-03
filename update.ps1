@@ -19,7 +19,7 @@ function Get-LocalConfig {
 
 function Get-RemoteConfig {
     try {
-        $json = (Invoke-WebRequest "$repoRaw/config.json").Content
+        $json = (Invoke-WebRequest "$repoRaw/config.json" -TimeoutSec 5).Content
         return $json | ConvertFrom-Json
     } catch {
         Log "Cannot load remote config"
@@ -37,8 +37,8 @@ if (-not $local -or $remote.version -ne $local.version) {
 
     Log "Updating version $($local.version) -> $($remote.version)"
 
-    Invoke-WebRequest "$repoRaw/clearn_auto.bat" -OutFile "$localPath\clearn_auto.bat"
-    Invoke-WebRequest "$repoRaw/config.json" -OutFile "$localPath\config.json"
+    Invoke-WebRequest "$repoRaw/clearn_auto.bat" -OutFile "$localPath\clearn_auto.bat" -TimeoutSec 5
+Invoke-WebRequest "$repoRaw/config.json" -OutFile "$localPath\config.json" -TimeoutSec 5
 }
 
 # ===== UPDATE TASK TIME =====
