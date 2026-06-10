@@ -1,187 +1,91 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: =========================================
-:: 📺 1. CĂN GIỮA MÀN HÌNH & THIẾT LẬP KÍCH THƯỚC 0304 15h10
-:: =========================================
-:: Thiết lập kích thước trước: 70 cột x 15 dòng
-mode con: cols=70 lines=15
+:: =========================================================
+:: UJU VINA IT - SYSTEM OPTIMIZER (FINAL VERSION)
+:: =========================================================
 
-:: Gọi PowerShell để đưa cửa sổ ra chính giữa màn hình
-powershell -NoProfile -Command "try { ^
-$w=Get-Host; ^
-$r=$w.UI.RawUI; ^
-$s=(Get-WmiObject Win32_VideoController).CurrentHorizontalResolution, (Get-WmiObject Win32_VideoController).CurrentVerticalResolution; ^
-$pos=$r.WindowPosition; ^
-$pos.X=[math]::Max(0, [int](($s[0]-70*8)/2)); ^
-$pos.Y=[math]::Max(0, [int](($s[1]-25*16)/2)); ^
-$r.WindowPosition=$pos ^
-} catch { }" >nul 2>&1
-
-title CONG CU TOI UU HE THONG - UJU VINA IT
-
-:: =========================================
-:: 📋 2. LOG ROTATION (GIỮ NGUYÊN)
-:: =========================================
+:: 1. CẤU HÌNH ĐƯỜNG DẪN
+set CONFIG=C:\Scripts\config.json
 set LOG=C:\Scripts\clearn.log
-if exist %LOG% (
-    for %%A in (%LOG%) do (
-        if %%~zA gtr 1048576 (
-            echo Log too big, resetting...
-            del %LOG%
-        )
-    )
+:: Thay đổi địa chỉ dưới đây thành thư mục chia sẻ trên Server của bạn
+set SERVER_LOG_PATH=\\30.10.20.102\LogClearn\
+
+:: 2. KHỞI TẠO CẤU HÌNH
+if not exist C:\Scripts mkdir C:\Scripts
+if not exist %CONFIG% (echo {"mode": "SAFE", "hidden": true} > %CONFIG%)
+
+:: 3. CHẾ ĐỘ ẨN (HIDDEN MODE) - DÙNG POWERSHELL HIỆN ĐẠI
+for /f "tokens=1,2 delims=:," %%a in ('powershell -Command "(Get-Content '%CONFIG%') | Select-String 'hidden'"') do set IS_HIDDEN=%%~b
+set IS_HIDDEN=%IS_HIDDEN: =%
+
+if "%IS_HIDDEN%"=="true" if "%~1" neq "hidden" (
+    powershell -WindowStyle Hidden -Command "Start-Process cmd.exe -ArgumentList '/c \"%~f0\" hidden' -WindowStyle Hidden"
+    exit
 )
 
-:: =========================================
-:: 🚀 3. AUTO RUN AS ADMIN (GIAO DIỆN CẢI TIẾN)
-:: =========================================
+:: 4. QUYỀN ADMIN
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    cls
-    color 0E
-    echo.
-    echo    =========================================================
-    echo       DANG KHOI DONG VOI QUYEN ADMIN...
-    echo    =========================================================
-    powershell -Command "Start-Process '%~f0' -Verb RunAs"
-    exit /b
+    powershell -Command "Start-Process '%~f0' -ArgumentList 'hidden' -Verb RunAs"
+    exit
 )
 
-:: =========================================
-:: 🔄 4. UPDATE SCRIPT (GIỮ NGUYÊN LOGIC GITHUB)
-:: =========================================
-cls
-color 0B
-echo.
-echo    =========================================================
-echo       DANG KIEM TRA BAN CAP NHAT...
-echo    =========================================================
-echo.
-echo    [*] Dang kiem tra phien ban moi tu Server...
+:: 5. LOAD MODE (SAFE/FULL)
+for /f "tokens=1,2 delims=:," %%a in ('powershell -Command "(Get-Content '%CONFIG%') | Select-String 'mode'"') do set MODE=%%~b
+set MODE=%MODE: =%
+set MODE=%MODE:"=%
 
-powershell -NoProfile -Command ^
-"try { ^
-    $ProgressPreference='SilentlyContinue'; ^
-    $url='https://raw.githubusercontent.com/hoangdqsc/clearn_auto/main/update.ps1'; ^
-    $tmp='C:\Scripts\update.tmp'; ^
-    $out='C:\Scripts\update.ps1'; ^
-    Invoke-WebRequest $url -OutFile $tmp -TimeoutSec 5; ^
-    if ((Test-Path $tmp) -and ((Get-Item $tmp).Length -gt 100)) { ^
-        Move-Item $tmp $out -Force ^
-    } ^
-} catch { }"
+echo ===== START CLEAN %date% %time% MODE=%MODE% ===== > %LOG%
 
-:: =========================================
-:: ⚙️ 5. CONFIG & INITIALIZE
-:: =========================================
-set MODE=SAFE
-if exist C:\Scripts\config.json (
-    for /f %%i in ('powershell -NoProfile -Command "(Get-Content 'C:\Scripts\config.json' | ConvertFrom-Json).mode"') do set MODE=%%i
-)
-if not exist C:\Scripts mkdir C:\Scripts
-
-echo. >> %LOG%
-echo ===== START CLEAN %date% %time% MODE=%MODE% ===== >> %LOG%
-
-:: =========================================
-:: 🧹 6. MAIN PROGRESS (CĂN LỀ TRÁI 3 KHOẢNG TRẮNG)
-:: =========================================
-
-:: Bước 1: User Temp
-cls
-echo.
-echo    =========================================================
-echo       CONG CU TOI UU HE THONG - UJU VINA IT
-echo    =========================================================
-echo.
-echo    [Buoc 1/4] Dang don dep tep tam (User Temp)...
-echo    [###-------] 25%%
-echo Cleaning USER TEMP >> %LOG%
+:: =========================================================
+:: 6. MAIN PROGRESS
+:: =========================================================
 del /f /s /q "%LOCALAPPDATA%\Temp\*.*" >nul 2>&1
+if %errorlevel% neq 0 call :log_error "User Temp"
 for /d %%i in ("%LOCALAPPDATA%\Temp\*") do rd /s /q "%%i" >nul 2>&1
 
-:: Bước 2: Windows Temp
-cls
-echo.
-echo    =========================================================
-echo       CONG CU TOI UU HE THONG - UJU VINA IT
-echo    =========================================================
-echo.
-echo    [Buoc 2/4] Dang xoa bo nho dem Windows...
-echo    [#####-----] 50%%
-echo Cleaning WINDOWS TEMP >> %LOG%
 del /f /s /q "C:\Windows\Temp\*.*" >nul 2>&1
+if %errorlevel% neq 0 call :log_error "Windows Temp"
 for /d %%i in ("C:\Windows\Temp\*") do rd /s /q "%%i" >nul 2>&1
 
-:: Bước 3: Recycle Bin
-cls
-echo.
-echo    =========================================================
-echo       CONG CU TOI UU HE THONG - UJU VINA IT
-echo    =========================================================
-echo.
-echo    [Buoc 3/4] Dang lam trong Thung rac...
-echo    [#######---] 75%%
-echo Cleaning Recycle Bin >> %LOG%
 powershell -command "Clear-RecycleBin -Force" >nul 2>&1
 
-:: Bước 4: Browser Cache
-cls
-echo.
-echo    =========================================================
-echo       CONG CU TOI UU HE THONG - UJU VINA IT
-echo    =========================================================
-echo.
-echo    [Buoc 4/4] Dang xoa Cache trinh duuyet...
-echo    [#########-] 95%%
-echo Cleaning Browser Cache >> %LOG%
-if exist "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache" (
-    del /f /s /q "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*" >nul 2>&1
-)
-if exist "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache" (
-    del /f /s /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*" >nul 2>&1
-)
+taskkill /f /im chrome.exe /t >nul 2>&1
+taskkill /f /im msedge.exe /t >nul 2>&1
+for /d %%d in ("%LOCALAPPDATA%\Google\Chrome\User Data\*") do if exist "%%d\Cache" del /f /s /q "%%d\Cache\*" >nul 2>&1
+for /d %%d in ("%LOCALAPPDATA%\Microsoft\Edge\User Data\*") do if exist "%%d\Cache" del /f /s /q "%%d\Cache\*" >nul 2>&1
 
-:: =========================================
-:: 🚀 7. FULL MODE (DỌN SÂU - GIỮ NGUYÊN LOGIC)
-:: =========================================
 if /I "%MODE%"=="FULL" (
-    cls
-    echo.
-    echo    =========================================================
-    echo       DANG CHAY CHE DO DON DEP SAU (FULL MODE)
-    echo    =========================================================
-    echo.
-    echo    [*] Dang tam dung Windows Update Service...
-    echo Running FULL CLEAN >> %LOG%
-
     net stop wuauserv >nul 2>&1
     del /f /s /q "C:\Windows\SoftwareDistribution\Download\*.*" >nul 2>&1
-    for /d %%i in ("C:\Windows\SoftwareDistribution\Download\*") do rd /s /q "%%i" >nul 2>&1
     net start wuauserv >nul 2>&1
-
-    echo    [*] Dang don dep Windows Prefetch...
-    echo Cleaning Prefetch >> %LOG%
     del /f /s /q "C:\Windows\Prefetch\*.*" >nul 2>&1
 )
 
-:: =========================================
-:: ✅ 8. DONE
-:: =========================================
+:: =========================================================
+:: 7. FINALIZE & SYNC TO SERVER
+:: =========================================================
 echo ===== DONE %date% %time% ===== >> %LOG%
-cls
-color 0A
-echo.
-echo    =========================================================
-echo       DON DEP HOAN TAT! CHUC BAN LAM VIEC TOT
-echo    =========================================================
-echo.
-echo       [+] Trang thai: Thanh cong
-echo       [+] Che do: %MODE%
-echo       [+] Cap nhat: 28-03-2026 (UJU VINA IT)
-echo.
-echo    =========================================================
-echo    Cua so tu dong dong sau 5 giay...
-timeout /t 5 /nobreak >nul
-exit /b
+
+:: Lấy ngày tháng định dạng YYYY-MM-DD
+for /f "tokens=1-3 delims=/ " %%a in ("%date%") do set TODAY=%%c-%%b-%%a
+
+:: Đẩy log về Server với định dạng [TenMay]_[NgayThang].log
+if exist "%SERVER_LOG_PATH%" (
+    copy /y "%LOG%" "%SERVER_LOG_PATH%%COMPUTERNAME%_%TODAY%.log" >nul 2>&1
+)
+
+:: Dọn dẹp log cũ trên Server quá 30 ngày để tiết kiệm dung lượng
+if exist "%SERVER_LOG_PATH%" (
+    forfiles /p "%SERVER_LOG_PATH%" /m *.log /d -30 /c "cmd /c del @path" >nul 2>&1
+)
+
+exit
+
+:: =========================================================
+:: SUBROUTINE: LOG ERROR
+:: =========================================================
+:log_error
+echo [%date% %time%] ERROR: %1 failed >> %LOG%
+goto :eof
